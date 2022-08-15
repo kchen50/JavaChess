@@ -289,7 +289,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                 if (condition2) {
                     return pieceMoveCheck(pieceType, oldFile, oldRank, player);
                 } else { // check that piece is moving along file, rank, or diagonal
-                    System.out.println("PINNED");
+                    //System.out.println("PINNED");
 
                     //System.out.println("OLD: " + oldFile + " " + oldRank);
                     //System.out.println("NEW: " + file + " " + rank);
@@ -298,13 +298,13 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                     // temporary false return to make testing easier
                 }
             } else {
-                System.out.println("deal with check");
+                //System.out.println("deal with check");
 
                 if(pieceType.equalsIgnoreCase("King")) { // king
                     return kingMove(oldFile, oldRank, player, true);
                 }else{
                     HashMap<String, ArrayList<Point>> atk = attackSources(kingRank, kingFile, player);
-                    System.out.println(atk.keySet());
+                    //System.out.println(atk.keySet());
                     Set<String> piecesAttacking = atk.keySet();
                     if(piecesAttacking.size() == 1 && !isPinned(oldFile, oldRank, player)){ // non-king piece, not pinned
                         Iterator<String> it = piecesAttacking.iterator();
@@ -413,13 +413,13 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         //System.out.println("PIN CHECK");
         // make methods that check if a space is attacked by a rook or bishop
         // make methods to check that there is nothing between two spaces (the piece & the king)
-        int tempFile = player == 0 ? whiteKingFile : blackKingFile;
-        int tempRank = 8-(player == 0 ? whiteKingRank : blackKingRank);
+        int kingFile = player == 0 ? whiteKingFile : blackKingFile;
+        int kingRank = 8-(player == 0 ? whiteKingRank : blackKingRank);
         //System.out.println(tempFile + " " + tempRank);
         //System.out.println("RANKS: " + oldRank + " " + (8-oldRank) + " " + tempRank);
         //System.out.println((8-oldRank) == tempRank);
-        boolean checkRookPin = oldFile != tempFile && 8-oldRank != tempRank;
-        boolean checkBishopPin = Math.abs(oldFile - tempFile) != Math.abs((8-oldRank) - tempRank);
+        boolean checkRookPin = oldFile != kingFile && 8-oldRank != kingRank;
+        boolean checkBishopPin = Math.abs(oldFile - kingFile) != Math.abs((8-oldRank) - kingRank);
         //System.out.println("PIN CHECKS: " + checkRookPin + " " + checkBishopPin);
 
         if(checkRookPin && checkBishopPin) {
@@ -430,36 +430,38 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         // check that there is no piece between (oldFile, oldRank) and the king and the first piece on the other side is a rook or bishop
 
         if(!checkRookPin) {
-            System.out.println("ROOK PIN CHECK");
-            if (oldFile == tempFile) { // UP, DOWN
-                boolean kingConnected = openFile(oldFile, oldRank, tempRank);
-                boolean rookPin = coveredByRook(oldRank, oldFile, tempRank > (8-oldRank) ? 1 : 2, player).size() != 0;
+            //System.out.println("ROOK PIN CHECK");
+            if (oldFile == kingFile) { // UP, DOWN
+                //System.out.println("file pin check");
+                boolean kingConnected = openFile(oldFile, oldRank, 8-kingRank);
+                boolean rookPin = coveredByRook(oldRank, oldFile, kingRank > (8-oldRank) ? 1 : 2, player).size() != 0;
                 //System.out.println("RANKS: " + tempRank + " " + oldRank);
                 //System.out.println((8-oldRank) > oldRank ? "DOWN" : "UP");
                 //System.out.println("PIN CONDITIONS: " + kingConnected + " " + rookPin);
                 return kingConnected && rookPin;
                 //System.out.println("CONNECTED: " + kingConnected);
             } else{ // LEFT, RIGHT
-                boolean kingConnected = openRank(oldRank, oldFile, tempFile);
-                boolean rookPin = coveredByRook(oldRank, oldFile, tempFile < oldFile ? 3 : 4, player).size() != 0;
+                //System.out.println("rank pin check");
+                boolean kingConnected = openRank(oldRank, oldFile, 8-kingFile);
+                boolean rookPin = coveredByRook(oldRank, oldFile, kingFile < oldFile ? 3 : 4, player).size() != 0;
                 //System.out.println(tempFile < oldFile ? "LEFT" : "RIGHT");
                 //System.out.println("PIN CONDITIONS: " + kingConnected + " " + rookPin);
                 return kingConnected && rookPin;
                 //System.out.println("CONNECTED: " + kingConnected);
             }
         }if (!checkBishopPin){
-            if (oldFile - tempFile == tempRank - (8-oldRank)) { // NE, SW
+            if (oldFile - kingFile == kingRank - (8-oldRank)) { // NE, SW
                 //System.out.println("BISHOP PIN CHECK");
-                boolean kingConnected = openPosDiag(8-oldRank, oldFile, tempRank, tempFile);
-                boolean bishopPin = coveredByBishop(oldRank, oldFile, tempRank > (8-oldRank) ? 1 : 2, player).size() != 0;
+                boolean kingConnected = openPosDiag(8-oldRank, oldFile, kingRank, kingFile);
+                boolean bishopPin = coveredByBishop(oldRank, oldFile, kingRank > (8-oldRank) ? 1 : 2, player).size() != 0;
                 //System.out.println((8-oldRank) > tempRank ? "NE" : "SW");
                 //System.out.println("PIN CONDITIONS: " + kingConnected + " " + bishopPin);
                 return kingConnected && bishopPin;
                 //System.out.println("CONNECTED: " + kingConnected);
-            } else if (oldFile - tempFile == (8-oldRank) - tempRank) { // NW, SE
+            } else if (oldFile - kingFile == (8-oldRank) - kingRank) { // NW, SE
                 //System.out.println("BISHOP PIN CHECK");
-                boolean kingConnected = openNegDiag(8-oldRank, oldFile, tempRank, tempFile);
-                boolean bishopPin = coveredByBishop(oldRank, oldFile, tempRank > (8-oldRank) ? 3 : 4, player).size() != 0;
+                boolean kingConnected = openNegDiag(8-oldRank, oldFile, kingRank, kingFile);
+                boolean bishopPin = coveredByBishop(oldRank, oldFile, kingRank > (8-oldRank) ? 3 : 4, player).size() != 0;
                 //System.out.println((8-oldRank) > tempRank ? "NW" : "SE");
                 //System.out.println("PIN CONDITIONS: " + kingConnected + " " + bishopPin);
                 return kingConnected && bishopPin;
@@ -499,7 +501,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     public boolean openFile(int file, int startRank, int endRank){ // viewed indices
         //System.out.println("RANKS: " + (8-startRank) + " " + (8-endRank));
         //System.out.println("WHITE KING: " + whiteKingFile + " " + whiteKingRank);
-        if(startRank > endRank){
+        /*if(startRank > endRank){
             for(int i = (8-startRank) - 1; i > (8-endRank); i--) {
                 //System.out.println("OPEN FILE CHECK: " + file + " " + i);
                 if (grid[8 - i][file].occupied)
@@ -512,6 +514,16 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                 if (grid[8 - i][file].occupied)
                     return false;
             }
+        }*/
+        if(startRank > endRank){ // (8-endRank) > (8-startRank)
+            for(int i = endRank + 1; i < startRank; i++)
+                if (grid[8 - i][file].occupied)
+                    return false;
+        }
+        else{ // (8-endRank) < (8-startRank)
+            for(int i = startRank + 1; i < endRank; i++)
+                if(grid[8 - i][file].occupied)
+                    return false;
         }
         return true;
     }
@@ -907,7 +919,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         if(Math.abs(file - oldFile) != Math.abs(rank - oldRank))
             return false;
         else{ // destination cannot be occupied by friendly piece; no piece in between original and destination can be occupied whatsoever
-            System.out.println("made it past initial bishop move check");
+            //System.out.println("made it past initial bishop move check");
             int lateralDist = Math.abs(file - oldFile);
             boolean aFile = file > oldFile;
             boolean aRank = rank > oldRank;
@@ -1116,7 +1128,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         int opPlayer = player == 0 ? 1 : 0;
 
         HashMap<String, ArrayList<Point>> atk = attackSources(kingRank, kingFile, player);
-        System.out.println(atk.keySet());
+        //System.out.println(atk.keySet());
         Set<String> piecesAttacking = atk.keySet();
         Iterator<String> it = piecesAttacking.iterator();
         String key = it.next();
@@ -1154,11 +1166,11 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                 case "BISHOP":
                     for(Point attackingBishop : atk.get(key)) {
                         ArrayList<Point> blockOrTake = bishopSpacesInBetween(kingRank, kingFile, attackingBishop.x, attackingBishop.y);
-                        System.out.println(blockOrTake);
+                        //System.out.println(blockOrTake);
                         for (Point p : blockOrTake) {
-                            System.out.println(p);
+                            //System.out.println(p);
                             HashMap<String, ArrayList<Point>> blockersOrTakers = attackSources(8 - p.x, p.y, opPlayer);
-                            System.out.println(blockersOrTakers);
+                            //System.out.println(blockersOrTakers);
                             if (blockersOrTakers.keySet().size() > 0)
                                 for (ArrayList<Point> blockerTakerList : blockersOrTakers.values())
                                     for (Point blockerTaker : blockerTakerList)
