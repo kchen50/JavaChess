@@ -58,7 +58,13 @@ public class GlassPane extends JComponent {
             Point containerPoint = SwingUtilities.convertPoint(glassPane, glassPanePoint, contentPane);
             if(containerPoint.y < 0){
                 if(containerPoint.y + menuBar.getHeight() > 0){
-                    System.out.println("MenuBar clicked");
+                    //System.out.println("MenuBar clicked");
+                    containerPoint = SwingUtilities.convertPoint(glassPane, glassPanePoint, menuBar);
+                    Component component = SwingUtilities.getDeepestComponentAt(menuBar, containerPoint.x, containerPoint.y);
+                    JMenu mb = (JMenu)component;
+                    System.out.println(component);
+                    Point componentPt = SwingUtilities.convertPoint(glassPane, glassPanePoint, component);
+                    component.dispatchEvent(new MouseEvent(component, e.getID(), e.getWhen(), e.getModifiers(), componentPt.x, componentPt.y, e.getClickCount(), e.isPopupTrigger()));
                 }else{
 
                 }
@@ -79,15 +85,18 @@ public class GlassPane extends JComponent {
                     //System.out.println("post click");
 
                 }
+                if(shatter) {
+                    if (promotion != null) {
+                        promotion.setVisible(false);
+                        promotion.setEnabled(false);
+                    }
 
-                promotion.setVisible(false);
-                promotion.setEnabled(false);
+                    setEnabled(false);
+                    setVisible(false);
 
-                shatter = false;
-                promotion = null;
-
-                setEnabled(false);
-                setVisible(false);
+                    shatter = false;
+                    promotion = null;
+                }
             }
 
         }

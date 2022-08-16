@@ -2,15 +2,16 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
-public class ChessBoard extends JPanel implements MouseListener, MouseMotionListener {
+public class ChessBoard extends JPanel implements MouseListener, MouseMotionListener, ActionListener {
     JFrame frame;
     JPanel gridPanel;
 
@@ -26,8 +27,12 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     Color light = new Color(222,247,255);
     Color dark = new Color(35, 126, 153);
 
-    String[] whiteSources = {"res/WhiteBishop.png", "res/WhiteKnight.png", "res/WhiteKing.png", "res/WhitePawn.png", "res/WhiteQueen.png", "res/WhiteRook.png"};
-    String[] blackSources = {"res/BlackBishop.png", "res/BlackKnight.png", "res/BlackKing.png", "res/BlackPawn.png", "res/BlackQueen.png", "res/BlackRook.png"};
+    //String[] whiteSources = {"res/WhiteBishop.png", "res/WhiteKnight.png", "res/WhiteKing.png", "res/WhitePawn.png", "res/WhiteQueen.png", "res/WhiteRook.png"};
+    //String[] blackSources = {"res/BlackBishop.png", "res/BlackKnight.png", "res/BlackKing.png", "res/BlackPawn.png", "res/BlackQueen.png", "res/BlackRook.png"};
+    String[] whiteSources = {"WhiteBishop.png", "WhiteKnight.png", "WhiteKing.png", "WhitePawn.png", "WhiteQueen.png", "WhiteRook.png"};
+    String[] blackSources = {"BlackBishop.png", "BlackKnight.png", "BlackKing.png", "BlackPawn.png", "BlackQueen.png", "BlackRook.png"};
+
+
     ImageIcon[] whiteIcons;
     ImageIcon[] blackIcons;
 
@@ -37,7 +42,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     JLabel clicked;
     int rank = -1, file = -1;
     int moveNumber = 0;
-    boolean whiteToMove = true;
+    //boolean whiteToMove = true;
     JLabel dragTest;
 
     int whiteKingRank = 1;
@@ -51,6 +56,8 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     int pawnPromotion = -1;
     boolean whiteChecked = false;
     boolean blackChecked = false;
+
+    JMenuItem[] options = new JMenuItem[2];
 
     public ChessBoard(){
         frame = new JFrame("Chess");
@@ -67,6 +74,12 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         JMenu optionsMenu = new JMenu("Options");
         menuBar.add(optionsMenu);
         frame.setJMenuBar(menuBar);
+        options[0] = new JMenuItem("New Game");
+        options[1] = new JMenuItem("Resign");
+        for(JMenuItem option : options) {
+            optionsMenu.add(option);
+            option.addActionListener(this);
+        }
 
         glassPane = new GlassPane(false, menuBar, frame.getContentPane());
         frame.setGlassPane(glassPane);
@@ -81,7 +94,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
 
         //frame.setContentPane(pane);
 
-        setGrid();
+        setGrid(true);
         setPieces();
 
 /*
@@ -144,7 +157,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
 
     }
 
-    public void setGrid(){
+    public void setGrid(boolean addToGridPanel){
         //grid = new Polygon[dimR][dimC];
         chessGrid = new JLabel[dimR][dimC];
         grid = new Tile[dimR][dimC];
@@ -161,10 +174,9 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                 chessGrid[i][j].addMouseMotionListener(this);
                 chessGrid[i][j].putClientProperty("rank", 8-i);
                 chessGrid[i][j].putClientProperty("file", (char)(j+65));
-
                 grid[i][j] = new Tile((i+j)%2==0 ? 0 : 1);
-
-                gridPanel.add(chessGrid[i][j]);
+                //if(addToGridPanel)
+                    gridPanel.add(chessGrid[i][j]);
                 //gridPanel.add(new JLabel());
             }
         }
@@ -193,30 +205,14 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
 
         int iconInd = -1;
         for(int i = 0; i < chessGrid[0].length; i++){
-            switch(i){
-                case 0:
-                case 7:
-                    iconInd = 5;
-                    break;
-                case 1:
-                case 6:
-                    iconInd = 1;
-                    break;
-                case 2:
-                case 5:
-                    iconInd = 0;
-                    break;
-                case 3:
-                    iconInd = 4;
-                    break;
-                case 4:
-                    iconInd = 2;
-                    break;
-                default:
-                    System.out.println("something broke and i have no idea what");
-
+            switch (i) {
+                case 0, 7 -> iconInd = 5;
+                case 1, 6 -> iconInd = 1;
+                case 2, 5 -> iconInd = 0;
+                case 3 -> iconInd = 4;
+                case 4 -> iconInd = 2;
+                default -> System.out.println("something broke and i have no idea what");
             }
-
             chessGrid[0][i].setIcon(blackIcons[iconInd]);
             chessGrid[7][i].setIcon(whiteIcons[iconInd]);
             chessGrid[1][i].setIcon(blackIcons[3]);
@@ -258,8 +254,9 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     }
 
     public ImageIcon getScaledImage(String path){
-        ImageIcon img = new ImageIcon(new ImageIcon(path).getImage().getScaledInstance(buttonSize, buttonSize, Image.SCALE_DEFAULT));
-        img.setDescription(path.substring(4, 9) + " " + path.substring(9, path.length()-4));
+        ImageIcon img = new ImageIcon(new ImageIcon(getClass().getResource(path)).getImage().getScaledInstance(buttonSize, buttonSize, Image.SCALE_DEFAULT));
+        img.setDescription(path.substring(0, path.length()-4));
+        //System.out.println(path.substring(0, path.length()-4));
         return img;
     }
 
@@ -1275,6 +1272,36 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         chessGrid[8-rank][hRookFile].setIcon(null);
     }
 
+    public void endGame(int winningPlayer){
+        glassPane.setVisible(true);
+        glassPane.setEnabled(true);
+    }
+
+    public void newGame(){
+        if(gridPanel != null)
+            pane.remove(gridPanel);
+        gridPanel = new JPanel();
+        gridPanel.setLayout(new GridLayout(dimR, dimC));
+        pane.add(gridPanel, JLayeredPane.DEFAULT_LAYER);
+        gridPanel.setBounds(0, 0, buttonSize*dimR, buttonSize*dimC);
+
+        mouse = false;
+        pieceHeld = false;
+        flipped = false;
+        rank = -1;
+        file = -1;
+        moveNumber = 0;
+        whiteChecked = false;
+        blackChecked = false;
+        castles = -1;
+        pawnPromotion = -1;
+        setGrid(false);
+        setPieces();
+        frame.setVisible(true);
+        frame.revalidate();
+        //printGrid();
+    }
+
     public void paintComponent(Graphics g){
         super.paintComponent(g);
         /*for(int i = 0; i < dimR; i++){
@@ -1350,13 +1377,17 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                     }
                     if(moveNumber % 2 == 0 && !notCovered(whiteKingRank, whiteKingFile, 0)){
                         whiteChecked = true;
-                        if(checkmate(0))
+                        if(checkmate(0)) {
                             System.out.println("Black checkmates white!");
+                            endGame(1);
+                        }
                         else System.out.println("Black checks white!");
                     }else if(moveNumber % 2 == 1 && !notCovered(blackKingRank, blackKingFile, 1)){
                         blackChecked = true;
-                        if(checkmate(1))
+                        if(checkmate(1)) {
                             System.out.println("White checkmates black!");
+                            endGame(0);
+                        }
                         else System.out.println("White checks black!");
                     }
                     //printGrid();
@@ -1418,5 +1449,17 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
             System.out.println();
         }
         System.out.println();
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if(e.getSource() == options[0]){
+            System.out.println("A new game has been initiated!");
+            newGame();
+        }
+        if(e.getSource() == options[1]){ // resign
+            System.out.println((moveNumber % 2 == 0 ? "Black" : "White") + " wins!");
+            endGame(moveNumber % 2 == 0 ? 1 : 0);
+        }
     }
 }
