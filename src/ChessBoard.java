@@ -3,13 +3,11 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.Timer;
 
 public class ChessBoard extends JPanel implements MouseListener, MouseMotionListener, ActionListener {
     JFrame frame;
@@ -43,7 +41,8 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     int rank = -1, file = -1;
     int moveNumber = 0;
     //boolean whiteToMove = true;
-    JLabel dragTest;
+    JLabel dragLabel;
+    JLabel gameMessages;
 
     int whiteKingRank = 1;
     int whiteKingFile = 4;
@@ -58,7 +57,9 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     boolean blackChecked = false;
 
     JMenuItem[] options = new JMenuItem[2];
+    JMenuBar menuBar;
 
+    java.util.TimerTask clearMessages;
     public ChessBoard(){
         frame = new JFrame("Chess");
         frame.add(this);
@@ -66,11 +67,13 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         gridPanel.setLayout(new GridLayout(dimR, dimC));
         //gridPanel.addMouseMotionListener(this);
 
+        menuBar = new JMenuBar();
         frame.setSize(buttonSize*(dimR+1), buttonSize*(dimC+1));
+        //frame.setSize(buttonSize*dimR, buttonSize*dimC + menuBar.getHeight());
         frame.setPreferredSize(new Dimension(buttonSize*dimR, buttonSize*dimC));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        JMenuBar menuBar = new JMenuBar();
+
         JMenu optionsMenu = new JMenu("Options");
         menuBar.add(optionsMenu);
         frame.setJMenuBar(menuBar);
@@ -94,7 +97,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
 
         //frame.setContentPane(pane);
 
-        setGrid(true);
+        setGrid();
         setPieces();
 
 /*
@@ -133,13 +136,22 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         else */
         frame.add(pane, BorderLayout.CENTER);
         pane.add(gridPanel, JLayeredPane.DEFAULT_LAYER);
-        gridPanel.setBounds(0, 0, buttonSize*dimR, buttonSize*dimC);
+        gridPanel.setBounds(0, 0, buttonSize*dimR, buttonSize*dimC+menuBar.getHeight());
 
-        dragTest = new JLabel();
+        dragLabel = new JLabel();
+        pane.add(dragLabel, JLayeredPane.DRAG_LAYER);
+        dragLabel.setBounds(0, 0, 100, 100);
+        dragLabel.setVisible(false);
 
-        pane.add(dragTest, JLayeredPane.DRAG_LAYER);
-        dragTest.setBounds(0, 0, 100, 100);
-        dragTest.setVisible(false);
+        gameMessages = new JLabel("", SwingConstants.CENTER);
+        pane.add(gameMessages, JLayeredPane.MODAL_LAYER);
+        gameMessages.setBounds(0, 0, pane.getWidth(), pane.getHeight());
+        gameMessages.setVisible(true);
+        gameMessages.setForeground(Color.BLACK);
+        gameMessages.setFont(gameMessages.getFont().deriveFont(gameMessages.getFont().getSize()*5f));
+        //gameMessages.setText("White wins!");
+        //gameMessages.setBackground(new Color(128, 128, 128, 30));
+
         //label.setBounds(0, 0, 100, 100);
         //dragTest.setVisible(true);
         //dragTest.setOpaque(true);
@@ -157,7 +169,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
 
     }
 
-    public void setGrid(boolean addToGridPanel){
+    public void setGrid(){
         //grid = new Polygon[dimR][dimC];
         chessGrid = new JLabel[dimR][dimC];
         grid = new Tile[dimR][dimC];
@@ -175,8 +187,8 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                 chessGrid[i][j].putClientProperty("rank", 8-i);
                 chessGrid[i][j].putClientProperty("file", (char)(j+65));
                 grid[i][j] = new Tile((i+j)%2==0 ? 0 : 1);
-                //if(addToGridPanel)
-                    gridPanel.add(chessGrid[i][j]);
+                gridPanel.add(chessGrid[i][j]);
+
                 //gridPanel.add(new JLabel());
             }
         }
@@ -1254,7 +1266,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
 
 
         grid[8 - rank][tempFile-2].setPiece(grid[tempRank][tempFile].movePiece());
-        chessGrid[8 - rank][tempFile-2].setIcon(dragTest.getIcon());
+        chessGrid[8 - rank][tempFile-2].setIcon(dragLabel.getIcon());
         grid[8 - rank][tempFile-1].setPiece(grid[tempRank][aRookFile].movePiece());
         chessGrid[8-rank][tempFile-1].setIcon(chessGrid[8-rank][aRookFile].getIcon());
         chessGrid[8-rank][aRookFile].setIcon(null);
@@ -1266,15 +1278,16 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         ((Rook)grid[8-rank][hRookFile].getPiece()).hasMoved = true;
 
         grid[8 - rank][tempFile+2].setPiece(grid[tempRank][tempFile].movePiece());
-        chessGrid[8 - rank][tempFile+2].setIcon(dragTest.getIcon());
+        chessGrid[8 - rank][tempFile+2].setIcon(dragLabel.getIcon());
         grid[8 - rank][tempFile+1].setPiece(grid[tempRank][hRookFile].movePiece());
         chessGrid[8-rank][tempFile+1].setIcon(chessGrid[8-rank][hRookFile].getIcon());
         chessGrid[8-rank][hRookFile].setIcon(null);
     }
 
     public void endGame(int winningPlayer){
-        glassPane.setVisible(true);
-        glassPane.setEnabled(true);
+        //glassPane.setVisible(true);
+        //glassPane.setEnabled(true);
+        deactivateGrid();
     }
 
     public void newGame(){
@@ -1295,13 +1308,20 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         blackChecked = false;
         castles = -1;
         pawnPromotion = -1;
-        setGrid(false);
+        setGrid();
         setPieces();
         frame.setVisible(true);
         frame.revalidate();
+        //System.out.println(pane.getSize());
         //printGrid();
     }
 
+    public void deactivateGrid(){
+        for(JLabel[] rank : chessGrid){
+            for(JLabel label : rank)
+                label.setEnabled(false);
+        }
+    }
     public void paintComponent(Graphics g){
         super.paintComponent(g);
         /*for(int i = 0; i < dimR; i++){
@@ -1325,10 +1345,10 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         mouse = true;
         pieceHeld = clicked.getIcon() != null;
 
-        dragTest.setIcon(clicked.getIcon());
+        dragLabel.setIcon(clicked.getIcon());
         clicked.setIcon(null);
-        dragTest.setLocation(new Point(e.getX()+clicked.getX()-buttonSize/2, e.getY()+clicked.getY()-buttonSize/2));
-        dragTest.setVisible(true);
+        dragLabel.setLocation(new Point(e.getX()+clicked.getX()-buttonSize/2, e.getY()+clicked.getY()-buttonSize/2));
+        dragLabel.setVisible(true);
 
         //gridPanel.setVisible(false);
         //clicked = (JLabel)e.getSource();
@@ -1346,7 +1366,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     public void mouseReleased(MouseEvent e) {
 // BUG: if mouse releases outside of bounds, pieces is placed at last square entered
         mouse = false;
-        dragTest.setVisible(false);
+        dragLabel.setVisible(false);
 
         //System.out.println("RELEASED ON: " + (char)(file+65) + "" + rank + "\n");
         //System.out.println("RANK: " + (8 - (int)clicked.getClientProperty("rank")));
@@ -1367,7 +1387,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                         //System.out.println("VALID MOVE");
                         grid[8 - rank][file].setPiece(grid[tempRank][tempFile].movePiece());
                         //System.out.println(grid[8-rank][file].getPiece());
-                        chessGrid[8 - rank][file].setIcon(dragTest.getIcon());
+                        chessGrid[8 - rank][file].setIcon(dragLabel.getIcon());
                     } else { // castles
                         switch (castles) {
                             case 0, 1 -> aCastles(tempRank, tempFile);
@@ -1381,23 +1401,31 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                             System.out.println("Black checkmates white!");
                             endGame(1);
                         }
-                        else System.out.println("Black checks white!");
+                        else {
+                            System.out.println("Black checks white!");
+                            setClearMessages("Black checks white!", 1500);
+                        }
                     }else if(moveNumber % 2 == 1 && !notCovered(blackKingRank, blackKingFile, 1)){
                         blackChecked = true;
                         if(checkmate(1)) {
                             System.out.println("White checkmates black!");
                             endGame(0);
                         }
-                        else System.out.println("White checks black!");
+                        else {
+                            System.out.println("White checks black!");
+                            setClearMessages("White checks black!", 1500);
+                        }
                     }
                     //printGrid();
                 } else {
                     //System.out.println("INVALID MOVE");
-                    clicked.setIcon(dragTest.getIcon());
+                    clicked.setIcon(dragLabel.getIcon());
                 }
             }else{
-                clicked.setIcon(dragTest.getIcon());
+                clicked.setIcon(dragLabel.getIcon());
                 System.out.println("It isn't " + (moveNumber % 2 == 1 ? "white's" : "black's") + " turn!");
+                setClearMessages("It isn't " + (moveNumber % 2 == 1 ? "white's" : "black's") + " turn!", 1500);
+
             }
         }
 
@@ -1408,6 +1436,23 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         //System.out.println("RELEASED ON: " + temp.getClientProperty("file") + "" + temp.getClientProperty("rank"));
 
         //System.out.println("file: " + (file-10) + " rank: " + (8-rank));
+    }
+
+    public void setClearMessages(String message, int delay){
+        gameMessages.setText(message);
+        Timer t = new java.util.Timer();
+        t.schedule(
+                new java.util.TimerTask() {
+                    @Override
+                    public void run() {
+                        // your code here
+                        // close the thread
+                        gameMessages.setText("");
+                        t.cancel();
+                    }
+                },
+                delay
+        );
     }
 
     @Override
@@ -1430,7 +1475,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        dragTest.setLocation(new Point(e.getX()+clicked.getX()-buttonSize/2, e.getY()+clicked.getY()-buttonSize/2));
+        dragLabel.setLocation(new Point(e.getX()+clicked.getX()-buttonSize/2, e.getY()+clicked.getY()-buttonSize/2));
         //System.out.println(dragTest.getLocation());
     }
 
@@ -1456,10 +1501,12 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         if(e.getSource() == options[0]){
             System.out.println("A new game has been initiated!");
             newGame();
+            gameMessages.setText("");
         }
         if(e.getSource() == options[1]){ // resign
             System.out.println((moveNumber % 2 == 0 ? "Black" : "White") + " wins!");
             endGame(moveNumber % 2 == 0 ? 1 : 0);
+            gameMessages.setText((moveNumber % 2 == 0 ? "Black" : "White") + " wins!");
         }
     }
 }

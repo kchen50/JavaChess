@@ -2,7 +2,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import javax.swing.event.MouseInputAdapter;
-import javax.tools.Tool;
 
 public class GlassPane extends JComponent {
     Point p;
@@ -59,24 +58,31 @@ public class GlassPane extends JComponent {
             if(containerPoint.y < 0){
                 if(containerPoint.y + menuBar.getHeight() > 0){
                     //System.out.println("MenuBar clicked");
+                    /*
                     containerPoint = SwingUtilities.convertPoint(glassPane, glassPanePoint, menuBar);
                     Component component = SwingUtilities.getDeepestComponentAt(menuBar, containerPoint.x, containerPoint.y);
                     JMenu mb = (JMenu)component;
-                    System.out.println(component);
+                    //mb.doClick();
+                    mb.setSelected(!mb.isSelected());
+                    mb.setPopupMenuVisible(!mb.isPopupMenuVisible());
+                    System.out.println(component.getClass().getSimpleName());
                     Point componentPt = SwingUtilities.convertPoint(glassPane, glassPanePoint, component);
+                    //System.out.println(componentPt);
                     component.dispatchEvent(new MouseEvent(component, e.getID(), e.getWhen(), e.getModifiers(), componentPt.x, componentPt.y, e.getClickCount(), e.isPopupTrigger()));
+
+                     */
                 }else{
 
                 }
             }else{
                 Component component = SwingUtilities.getDeepestComponentAt(contentPane, containerPoint.x, containerPoint.y);
-                //System.out.println(component);
 
+                //System.out.println(component);
                 //System.out.println(component.getClass().getSimpleName() + ((JComponent)component).getClientProperty("promotionName"));
                 if(((JComponent)component).getClientProperty("promotionName") == null) {
                     if(shatter) {
                         //System.out.println("GLASS PANE HAS SHATTERED");
-                        chessBoard.chessGrid[8 - oldRank][oldFile].setIcon(chessBoard.dragTest.getIcon());
+                        chessBoard.chessGrid[8 - oldRank][oldFile].setIcon(chessBoard.dragLabel.getIcon());
                     }
                 }
                 else {

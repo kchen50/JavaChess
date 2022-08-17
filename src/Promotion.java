@@ -145,7 +145,7 @@ public class Promotion extends JPanel implements MouseListener {
                 chessBoard.grid[8-rank][file].setPiece(chessBoard.grid[8-oldRank][oldFile].movePiece());
                 chessBoard.grid[8-rank][file].setPiece(new Knight(rank, file, player));
             }
-            case "CANCEL" -> chessBoard.chessGrid[8 - oldRank][oldFile].setIcon(chessBoard.dragTest.getIcon());
+            case "CANCEL" -> chessBoard.chessGrid[8 - oldRank][oldFile].setIcon(chessBoard.dragLabel.getIcon());
             default -> System.out.println("Pawn promotion broke.");
         }
     //System.out.println(chessBoard.grid[8-oldRank][file].getPiece());
